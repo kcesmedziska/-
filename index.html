@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+  <meta charset="UTF-8" />
+  <title>Сенките на Лумино</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+      * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+      }
+      body {
+          font-family: Arial, sans-serif;
+      }
+
+      body::before {
+          content: "";
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: url('lumino.png');
+          z-index: -1;
+          transition: background 0.5s ease-in-out;
+      }
+
+      body.level1::before {
+          background: url('level1-bg.png');
+          opacity: 90%;
+      }
+      body.level2::before {
+          background: url('level2-bg.png');
+          opacity: 90%;
+      }
+      body.level3::before {
+          background: url('level3-bg.png');
+          opacity: 90%;
+      }
+      body.level4::before {
+          background: url('level4-bg.png');
+          opacity: 90%;
+      }
+
+      /* ============== FADE / TRANSITION ============== */
+      .game-container.hide {
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.6s ease;
+      }
+      .game-container {
+          width: 90%;
+          max-width: 600px;
+          margin: 50px auto;
+          background: rgba(255, 255, 255, 0.9);
+          padding: 20px;
+          border-radius: 5px;
+          box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+          transition: opacity 0.6s ease;
+          opacity: 1;
+      }
+
+      .game-container h1 {
+          font-family: "Cinzel", serif;
+          font-size: 2rem;
+          text-align: center;
+          margin-bottom: 20px;
+          background: linear-gradient(90deg, #e4af65, #d147a3);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+      }
+      .game-text {
+          margin-bottom: 20px;
+          font-size: 1.1rem;
+          line-height: 1.5;
+          color: #222;
+          white-space: pre-line;
+      }
+      .choices {
+          margin-bottom: 20px;
+      }
+      .choice-btn {
+          display: block;
+          width: 100%;
+          margin: 8px 0;
+          padding: 12px;
+          font-size: 1rem;
+          background: #dddddd;
+          border: none;
+          border-radius: 3px;
+          cursor: pointer;
+          transition: background 0.3s, box-shadow 0.3s;
+      }
+      .choice-btn:hover {
+          background: #ccc;
+          box-shadow: 0 0 8px rgba(208, 62, 240, 0.5);
+      }
+      .next-btn,
+      .restart-btn {
+          display: none;
+          padding: 10px 15px;
+          font-size: 1rem;
+          border: none;
+          color: #fff;
+          border-radius: 3px;
+          cursor: pointer;
+          margin-right: 5px;
+          margin-top: 8px;
+          transition: background 0.3s, box-shadow 0.3s;
+      }
+      .next-btn {
+          background: #008cba;
+      }
+      .next-btn:hover {
+          background: #0072a0;
+          box-shadow: 0 0 8px rgba(0, 174, 255, 0.6);
+      }
+      .restart-btn {
+          background: rgba(209, 71, 163, 0.7);
+          margin-right: 0;
+      }
+      .restart-btn:hover {
+          background: rgba(209, 71, 163, 0.7);
+          box-shadow: 0 0 8px rgba(209, 71, 163, 0.6);
+      }
+      .end-message {
+          margin: 10px 0;
+          font-weight: bold;
+          text-align: center;
+          font-size: 1.2rem;
+      }
+      .win-text {
+          color: rgba(18, 166, 5, 0.7);
+      }
+      .lose-text {
+          color: #d03f58;
+      }
+
+      /* Input field for user name */
+      .name-input {
+          display: block;
+          width: 100%;
+          margin: 15px 0;
+          padding: 10px;
+          font-size: 1rem;
+          border-radius: 3px;
+          border: 1px solid #ccc;
+      }
+      .start-btn {
+          display: inline-block;
+          padding: 10px 15px;
+          font-size: 1rem;
+          background: #008cba;
+          color: #fff;
+          border: none;
+          border-radius: 3px;
+          cursor: pointer;
+          margin-top: 10px;
+          transition: background 0.3s, box-shadow 0.3s;
+      }
+      .start-btn:hover {
+          background: #0072a0;
+          box-shadow: 0 0 8px rgba(0, 174, 255, 0.6);
+      }
+  </style>
+</head>
+<body>
+<div class="game-container">
+  <h1>Сенките на Лумино</h1>
+  <div id="gameText" class="game-text"></div>
+  <div id="choices" class="choices"></div>
+  <button id="nextBtn" class="next-btn">Следно</button>
+  <button id="restartBtn" class="restart-btn">Почни одново</button>
+</div>
+
+<script>
+  let selectedCharacter = "";
+  let currentScene = 0;
+
+  const scenes = [
+    {
+      id: 0,
+      text: "",
+      choices: []
+    },
+    {
+      id: 1,
+      text: "Ниво 1\n\nДобредојде во Лумино, град обвиен во мистерија. Влијателен бизнисмен по име Драган исчезнал, " +
+        "а медиумите пласираат конфузни вести. Како новинар-детектив, ти треба да ја откриеш вистината.\n\n" +
+        "Како ќе започнеш?",
+      choices: [
+        {
+          text: "Ќе се упатам во редакцијата на локалниот весник за први траги.",
+          nextScene: 2
+        },
+        {
+          text: "Ќе појдам да ги прегледам локалните онлајн форуми.",
+          nextScene: 3
+        }
+      ]
+    },
+    {
+      id: 2,
+      text: "Ниво 1\n\nВо редакцијата сите се вознемирени. Новинарите се преполни со шпекулации: " +
+        "некој велел дека Драган е виден во далечен град, друг дека е киднапиран од конкурентска фирма.\n\n" +
+        "Како ќе постапиш?",
+      choices: [
+        {
+          text: "Ќе зборувам со главниот уредник за официјални информации.",
+          nextScene: 4
+        },
+        {
+          text: "Ќе се обидам да стапам во контакт со семејството на исчезнатиот.",
+          nextScene: 5
+        }
+      ]
+    },
+    {
+      id: 3,
+      text: "Ниво 1\n\nОнлајн форумите се преполни со теории на заговор. Некои велат дека Драган сам го " +
+        "организирал своето исчезнувањето, други дека политичарите се замешани.\n\nШто ќе направиш?",
+      choices: [
+        {
+          text: "Ќе проверам кои профили се најактивни и дали има сомнителни бот-сметки.",
+          nextScene: 4
+        },
+        {
+          text: "Ќе се упатам во редакцијата за да ги споредам податоците.",
+          nextScene: 2
+        }
+      ]
+    },
+    {
+      id: 4,
+      text: "Ниво 1\n\nГлавниот уредник ти кажува дека градоначалникот Мартин веќе дал официјална изјава, " +
+        "обвинувајќи „непознати политички противници“. Семејството на Драган, пак, е многу вознемирено. " +
+        "Ти даваат контакт со сопругата Елена.\n\nШто ќе направиш понатаму?",
+      choices: [
+        {
+          text: "Ќе се слушнам со Елена за да добијам повеќе детали.",
+          nextScene: 5
+        },
+        {
+          text: "Ќе појдам директно кај градоначалникот Мартин.",
+          nextScene: 6
+        }
+      ]
+    },
+    {
+      id: 5,
+      text: "Ниво 1\n\nЕлена е вознемирена. Тврди дека Драган добивал заканувачки пораки. " +
+        "Понекогаш бил придружуван од сомнителни лица. Таа верува дека медиумите ја извртуваат вистината.\n\n" +
+        "Со оваа нова информација, го завршуваш првото ниво на истрага.\n\n" +
+        "Кликај напред за да преминеш во Ниво 2.",
+      choices: [
+        {
+          text: "Продолжи кон Ниво 2",
+          nextScene: 6
+        }
+      ]
+    },
+    {
+      id: 6,
+      text: "Ниво 2\n\nСега имаш малку повеќе сознанија. Градоначалникот Мартин тврди дека политички противници " +
+        "шират дезинформации, а семејството на Драган зборува за закани и извртување на вистината.\n\n" +
+        "Како ќе постапиш со овие информации?",
+      choices: [
+        {
+          text: "Ќе го посетам Мартин во неговата канцеларија.",
+          nextScene: 7
+        },
+        {
+          text: "Ќе ги проверам дополнителните траги на социјалните мрежи.",
+          nextScene: 8
+        }
+      ]
+    },
+    {
+      id: 7,
+      text: "Ниво 2\n\nМартин повторно обвинува дека непознати сили сакаат да го дестабилизираат " +
+        "системот. Ти предава неколку доверливи документи од градскиот совет, поврзани со големи финансиски " +
+        "проекти на Драган.\n\nШто ќе направиш со документите?",
+      choices: [
+        {
+          text: "Ќе ги разгледам во редакцијата.",
+          nextScene: 9
+        },
+        {
+          text: "Ќе го разговарам со инспекторот Александар за мислење.",
+          nextScene: 10
+        }
+      ]
+    },
+    {
+      id: 8,
+      text: "Ниво 2\n\nСоцијалните мрежи се преполни со коментари против Драган, некои го " +
+        "обвинуваат за корупција, а други тврдат дека тој е жртва на политички прогон.\n\n" +
+        "Во меѓувреме, забележуваш неколку профили кои изгледаат како „ботови“ кои шират сензационални наслови. " +
+        "Што е наредно?",
+      choices: [
+        {
+          text: "Ќе ги снимам профилите за докази и ќе појдам во редакцијата.",
+          nextScene: 9
+        },
+        {
+          text: "Ќе ги пријавам кај полицијата како можни извори на дезинформации.",
+          nextScene: 10
+        }
+      ]
+    },
+    {
+      id: 9,
+      text: "Ниво 2\n\nВо редакцијата забележуваш дека многу материјали се едитирани и можеби " +
+        "злоупотребени како дезинформации. Уредникот сугерира дека треба итно да се пријави кај полицијата " +
+        "или да се проверат актите во градскиот совет.\n\nШто ќе направиш?",
+      choices: [
+        {
+          text: "Ќе појдам во полиција со досегашните докази.",
+          nextScene: 10
+        },
+        {
+          text: "Ќе направам статија и ќе ја објавам веднаш.",
+          nextScene: 17
+        }
+      ]
+    },
+    {
+      id: 10,
+      text: "Ниво 2\n\nИнспекторот Александар прегледува дел од твоите докази. " +
+        "Има основа да верува дека некоја група систематски пласира лажни вести против Драган, " +
+        "но и дека Драган можеби има свои тајни игри.\n\n" +
+        "Завршуваш со второто ниво и се подготвуваш за Ниво 3.",
+      choices: [
+        {
+          text: "Продолжи кон Ниво 3",
+          nextScene: 11
+        }
+      ]
+    },
+    {
+      id: 11,
+      text: "Ниво 3\n\nПочнуваш да насетуваш дека зад ова стои поголем мистерија. " +
+        "Полицијата ти дава пристап до неколку доверливи искази од сведоци. Нивните приказни варираат, " +
+        "но сите спомнуваат мистериозна група „Сенките“.\n\nКако ќе постапиш понатаму?",
+      choices: [
+        {
+          text: "Ќе ги интервјуирам сведоците лично.",
+          nextScene: 12
+        },
+        {
+          text: "Ќе појдам кај Елена повторно за да ја известам за откритието.",
+          nextScene: 13
+        }
+      ]
+    },
+    {
+      id: 12,
+      text: "Ниво 3\n\nСведоците велат дека „Сенките“ манипулираат со јавноста, финансираат " +
+        "сензационални наслови, и можеби имаат свои луѓе во градската управа.\n\n" +
+        "Дали ќе веруваш во нивните зборови?",
+      choices: [
+        {
+          text: "Ќе проверам конкретни детали: имиња, локации, финансиски траги.",
+          nextScene: 14
+        },
+        {
+          text: "Ќе ја известам полицијата и ќе побарам заедничка акција.",
+          nextScene: 15
+        }
+      ]
+    },
+    {
+      id: 13,
+      text: "Ниво 3\n\nЕлена се плаши дека Драган можеби сам се вплеткал со „Сенките“ " +
+        "за свои бизнис интереси. Таа не е сигурна дали тој е жртва или соучесник.\n\n" +
+        "Што ќе направиш понатаму?",
+      choices: [
+        {
+          text: "Ќе ги побарам документите од градскиот совет спомнати од Мартин.",
+          nextScene: 14
+        },
+        {
+          text: "Ќе ја убедам Елена да зборува јавно за сомнежите.",
+          nextScene: 15
+        }
+      ]
+    },
+    {
+      id: 14,
+      text: "Ниво 3\n\nДокументите потврдуваат големи финансиски транзакции поврзани со Драган, " +
+        "некои од нив потекнуваат од фирми кои се поврзани со 'Сенките'.\n\n" +
+        "Изгледа имаш сериозен доказ, но и голема опасност. Што следно?",
+      choices: [
+        {
+          text: "Ќе ја известам полицијата со сите докази.",
+          nextScene: 15
+        },
+        {
+          text: "Ќе подготвам ексклузивна вест и ќе ја објавам.",
+          nextScene: 17
+        }
+      ]
+    },
+    {
+      id: 15,
+      text: "Ниво 3\n\nПолицијата покренува истрага против 'Сенките', но бара уште докази. " +
+        "Градот е напнат, протестите продолжуваат, а медиумите се поделени.\n\n" +
+        "Завршуваш со третото ниво и преоѓаш кон Ниво 4.",
+      choices: [
+        {
+          text: "Продолжи кон Ниво 4",
+          nextScene: 16
+        }
+      ]
+    },
+    {
+      id: 16,
+      text: "Ниво 4\n\nВо градот завладува уште поголем хаос. Луѓето не знаат кому да веруваат. " +
+        "Ти добиваш дојава дека Драган можеби е жив, скриен надвор од Лумино.\n\nШто ќе направиш?",
+      choices: [
+        {
+          text: "Ќе се обидам да го лоцирам Драган и да му поставам директни прашања.",
+          nextScene: 17
+        },
+        {
+          text: "Ќе ги следам 'Сенките' за да видам кои се нивните следни чекори.",
+          nextScene: 18
+        }
+      ]
+    },
+    {
+      id: 17,
+      text: "Ниво 4\n\nВо обид да објавиш статија или да го следиш Драган, споделуваш делумно проверени информации. " +
+        "Гневот на граѓаните расте. 'Сенките' ја користат оваа врева за да пуштат уште лажни вести.\n\n" +
+        "Како ќе реагираш?",
+      choices: [
+        {
+          text: "Ќе објавам исправка и ќе побарам смирување на ситуацијата.",
+          nextScene: 19
+        },
+        {
+          text: "Ќе продолжам да објавувам вести за да бидам прв, без оглед на потврдата.",
+          nextScene: 21
+        }
+      ]
+    },
+    {
+      id: 18,
+      text: "Ниво 4\n\nГи следиш 'Сенките' до една напуштена зграда. Дознаваш дека имаат цел " +
+        "да ја срушат довербата во јавните институции и да создадат политички хаос.\n\n" +
+        "Треба брзо да направиш одлука: ",
+      choices: [
+        {
+          text: "Ќе ги пријавам веднаш кај полицијата со сè што имам.",
+          nextScene: 19
+        },
+        {
+          text: "Ќе се обидам да преговарам со нив за добивање ексклузивна информација.",
+          nextScene: 21
+        }
+      ]
+    },
+    {
+      id: 19,
+      text: "Ниво 4\n\nПолицијата со твојата помош запира дел од активностите на 'Сенките'. " +
+        "Наскоро, јавноста дознава за манипулациите. Но, зависи како ќе ги објавиш конечните докази.",
+      choices: [
+        {
+          text: "Ќе ги објавам сите докази јавно и транспарентно.",
+          nextScene: 20
+        },
+        {
+          text: "Ќе ги прикријам дел од доказите од политичка корист.",
+          nextScene: 21
+        }
+      ]
+    },
+    {
+      id: 20,
+      text: "",
+      choices: []
+    },
+    {
+      id: 21,
+      text: "",
+      choices: []
+    }
+  ];
+
+  // 1) Determine the level from a scene ID
+  function getLevel(sceneId) {
+    // Scenes 1..5 => Level 1
+    // Scenes 6..10 => Level 2
+    // Scenes 11..15 => Level 3
+    // Scenes 16..19 => Level 4
+    // Scenes 20..21 => End Scenes
+    if (sceneId >= 1 && sceneId <= 5) return 1;
+    if (sceneId >= 6 && sceneId <= 10) return 2;
+    if (sceneId >= 11 && sceneId <= 15) return 3;
+    if (sceneId >= 16 && sceneId <= 19) return 4;
+    return 0;
+  }
+
+  // 2) Apply dynamic styling per level
+  function applyLevelStyling(sceneId) {
+    const level = getLevel(sceneId);
+    document.body.classList.remove("level1", "level2", "level3", "level4");
+
+    if (level === 1) document.body.classList.add("level1");
+    if (level === 2) document.body.classList.add("level2");
+    if (level === 3) document.body.classList.add("level3");
+    if (level === 4) document.body.classList.add("level4");
+  }
+
+  const gameText = document.getElementById("gameText");
+  const choicesContainer = document.getElementById("choices");
+  const nextBtn = document.getElementById("nextBtn");
+  const restartBtn = document.getElementById("restartBtn");
+  const container = document.querySelector(".game-container");
+
+  function loadScene(sceneIndex) {
+    currentScene = sceneIndex;
+    const scene = scenes[sceneIndex];
+    if (!scene) return;
+
+    applyLevelStyling(sceneIndex); // Set background/animation based on level
+
+    // Fade out quickly, then fade in with new content
+    container.classList.add("hide");
+    setTimeout(() => {
+      container.classList.remove("hide");
+      updateSceneContent(scene);
+    }, 600);
+  }
+
+  function updateSceneContent(scene) {
+    gameText.innerHTML = "";
+    choicesContainer.innerHTML = "";
+    nextBtn.style.display = "none";
+    restartBtn.style.display = "none";
+
+    // Scene 0 => name input
+    if (scene.id === 0) {
+      gameText.textContent = "Внеси го твоето име за да започнеш:";
+      const input = document.createElement("input");
+      input.classList.add("name-input");
+      input.setAttribute("placeholder", "Твоето име");
+
+      const startBtn = document.createElement("button");
+      startBtn.classList.add("start-btn");
+      startBtn.innerText = "Започни";
+      startBtn.addEventListener("click", () => {
+        selectedCharacter = input.value.trim() || "Играч";
+        goToScene(1);
+      });
+
+      choicesContainer.appendChild(input);
+      choicesContainer.appendChild(startBtn);
+      return;
+    }
+
+    // Normal scenes
+    gameText.innerText = scene.text;
+    if (!scene.choices || scene.choices.length === 0) {
+      showEndMessage(scene.id);
+      return;
+    }
+
+    scene.choices.forEach((choice) => {
+      const button = document.createElement("button");
+      button.innerText = choice.text;
+      button.classList.add("choice-btn");
+      button.addEventListener("click", () => {
+        goToScene(choice.nextScene);
+      });
+      choicesContainer.appendChild(button);
+    });
+  }
+
+  function goToScene(sceneIndex) {
+    loadScene(sceneIndex);
+  }
+
+  function showEndMessage(sceneIndex) {
+    const endMessage = document.createElement("div");
+    endMessage.classList.add("end-message");
+
+    if (sceneIndex === 20) {
+      endMessage.textContent =
+        "Победа! Успеа да ја разоткриеш мистеријата, " + (selectedCharacter || "Играч") + "!";
+      endMessage.classList.add("win-text");
+    } else if (sceneIndex === 21) {
+      endMessage.textContent =
+        "Изгуби! Истрагата не беше успешна. Градот е во хаос, " + (selectedCharacter || "Играч") + ".";
+      endMessage.classList.add("lose-text");
+    }
+    choicesContainer.appendChild(endMessage);
+    restartBtn.style.display = "inline-block";
+  }
+
+  function restartGame() {
+    selectedCharacter = "";
+    loadScene(0);
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    loadScene(0);
+    restartBtn.addEventListener("click", restartGame);
+  });
+</script>
+</body>
+</html>
