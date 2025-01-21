@@ -51,8 +51,7 @@
           background-size: cover;
           opacity: 90%;
       }
-
-      /* ============== FADE / TRANSITION ============== */
+    
       .game-container.hide {
           opacity: 0;
           pointer-events: none;
@@ -146,7 +145,6 @@
           color: #d03f58;
       }
 
-      /* Input field for user name */
       .name-input {
           display: block;
           width: 100%;
@@ -497,13 +495,7 @@
     }
   ];
 
-  // 1) Determine the level from a scene ID
   function getLevel(sceneId) {
-    // Scenes 1..5 => Level 1
-    // Scenes 6..10 => Level 2
-    // Scenes 11..15 => Level 3
-    // Scenes 16..19 => Level 4
-    // Scenes 20..21 => End Scenes
     if (sceneId >= 1 && sceneId <= 5) return 1;
     if (sceneId >= 6 && sceneId <= 10) return 2;
     if (sceneId >= 11 && sceneId <= 15) return 3;
@@ -511,7 +503,6 @@
     return 0;
   }
 
-  // 2) Apply dynamic styling per level
   function applyLevelStyling(sceneId) {
     const level = getLevel(sceneId);
     document.body.classList.remove("level1", "level2", "level3", "level4");
@@ -533,9 +524,8 @@
     const scene = scenes[sceneIndex];
     if (!scene) return;
 
-    applyLevelStyling(sceneIndex); // Set background/animation based on level
-
-    // Fade out quickly, then fade in with new content
+    applyLevelStyling(sceneIndex); 
+    
     container.classList.add("hide");
     setTimeout(() => {
       container.classList.remove("hide");
@@ -549,7 +539,6 @@
     nextBtn.style.display = "none";
     restartBtn.style.display = "none";
 
-    // Scene 0 => name input
     if (scene.id === 0) {
       gameText.textContent = "Внеси го твоето име за да започнеш:";
       const input = document.createElement("input");
@@ -569,7 +558,6 @@
       return;
     }
 
-    // Normal scenes
     gameText.innerText = scene.text;
     if (!scene.choices || scene.choices.length === 0) {
       showEndMessage(scene.id);
