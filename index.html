@@ -25,33 +25,33 @@
           left: 0;
           width: 100%;
           height: 100%;
-          background: url('lumino.png') no-repeat;
+          background: url('lumino.png') no-repeat fixed center;
           background-size: cover;
           z-index: -1;
           transition: background 0.5s ease-in-out;
       }
 
       body.level1::before {
-          background: url('level1-bg.png')  no-repeat;
+          background: url('level1-bg.png') no-repeat fixed center;
           background-size: cover;
           opacity: 90%;
       }
       body.level2::before {
-          background: url('level2-bg.png')  no-repeat;
+          background: url('level2-bg.png') no-repeat fixed center;
           background-size: cover;
           opacity: 90%;
       }
       body.level3::before {
-          background: url('level3-bg.png') no-repeat;
+          background: url('level3-bg.png') no-repeat fixed center;
           background-size: cover;
           opacity: 90%;
       }
       body.level4::before {
-          background: url('level4-bg.png') no-repeat;
+          background: url('level4-bg.png') no-repeat fixed center;
           background-size: cover;
           opacity: 90%;
       }
-    
+
       .game-container.hide {
           opacity: 0;
           pointer-events: none;
@@ -524,8 +524,8 @@
     const scene = scenes[sceneIndex];
     if (!scene) return;
 
-    applyLevelStyling(sceneIndex); 
-    
+    applyLevelStyling(sceneIndex);
+
     container.classList.add("hide");
     setTimeout(() => {
       container.classList.remove("hide");
